@@ -1,10 +1,19 @@
+"use server";
+
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
+
+import { SuccessMessage } from "@/src/components/google-ads/success-message";
+import { ConnectGoogleAdsButton } from "@/src/components/google-ads/connect-google-ads-button";
+
 import { createSupabaseServerClient } from "@/src/lib/supabase/supabase-server";
-import { signOut } from "../actions/auth/sign-out";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { connected?: string; accounts?: string };
+}) {
   const supabase = await createSupabaseServerClient();
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -14,32 +23,22 @@ export default async function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
-            <p className="mt-2 text-gray-600">Welcome back, {user.email}</p>
-          </div>
+    <div className="mx-auto max-w-4xl p-6">
+      <h1 className="mb-8 text-3xl font-bold">Dashboard</h1>
 
-          <form action={signOut}>
-            <button
-              type="submit"
-              className="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500"
-            >
-              Sign Out
-            </button>
-          </form>
-        </div>
+      <Suspense fallback={null}>
+        <SuccessMessage searchParams={searchParams} />
+      </Suspense>
 
-        <div className="rounded-lg bg-white p-6 shadow">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Your Protected Content
-          </h2>
-          <p className="mt-2 text-gray-600">
-            This page is only accessible to authenticated users.
-          </p>
-        </div>
+      <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+        <h2 className="mb-2 text-xl text-slate-900 font-semibold">
+          Google Ads Integration
+        </h2>
+        <p className="mb-6 text-sm text-gray-600">
+          Connect your Google Ads account to sync and analyze your search terms.
+        </p>
+
+        <ConnectGoogleAdsButton />
       </div>
     </div>
   );
