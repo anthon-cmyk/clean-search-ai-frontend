@@ -3,7 +3,7 @@ export function SuccessMessage({
 }: {
   searchParams: { connected?: string; accounts?: string };
 }) {
-  if (!searchParams.connected) return null;
+  if (!searchParams?.connected) return null;
 
   return (
     <div className="mb-6 rounded-md bg-green-50 p-4">
