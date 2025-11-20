@@ -1,14 +1,11 @@
 "use client";
+export const dynamic = "force-dynamic";
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
 import { signIn } from "@/app/actions/auth/sign-in";
 
 export default function SignInPage() {
-  const searchParams = useSearchParams();
-  const message = searchParams.get("message");
-
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<{
@@ -56,12 +53,6 @@ export default function SignInPage() {
         </div>
 
         <form action={handleSubmit} className="mt-8 space-y-6">
-          {message && (
-            <div className="rounded-md bg-blue-50 p-4">
-              <p className="text-sm text-blue-800">{message}</p>
-            </div>
-          )}
-
           {error && (
             <div className="rounded-md bg-red-50 p-4">
               <p className="text-sm text-red-800">{error}</p>
