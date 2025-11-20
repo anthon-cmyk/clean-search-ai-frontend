@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { googleAdsApi } from "@/src/lib/google-ads-client";
 import {
@@ -11,7 +11,6 @@ import {
   TSyncSearchTermsInput,
 } from "@/src/types/api/google-ads.types";
 
-// ---- local UI-level types (DTO contracts you didn't show) ----
 type TGoogleAdsCustomer = {
   id: string;
   customerId: string;
@@ -61,15 +60,11 @@ export function GoogleAdsPanel() {
   const qc = useQueryClient();
 
   const [selected, setSelected] = useState<TSelectableAccount | null>(null);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
 
-  // default date range 30d
-  useEffect(() => {
-    const r = lastNDaysRange(30);
-    setStartDate(r.startDate);
-    setEndDate(r.endDate);
-  }, []);
+  const initialRange = useMemo(() => lastNDaysRange(30), []);
+
+  const [startDate, setStartDate] = useState(initialRange.startDate);
+  const [endDate, setEndDate] = useState(initialRange.endDate);
 
   // DB customers (source of truth)
   const customersQ = useQuery<TGoogleAdsCustomer[]>({
@@ -162,7 +157,7 @@ export function GoogleAdsPanel() {
       !!selected &&
       !!startDate &&
       !!endDate &&
-      typeof (googleAdsApi as any).storedTerms === "function",
+      typeof googleAdsApi.storedTerms === "function",
   });
 
   // Sync jobs history
