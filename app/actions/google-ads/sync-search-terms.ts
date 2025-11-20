@@ -1,17 +1,9 @@
 "use server";
 
-import { createSupabaseServerClient } from "@/src/lib/supabase/supabase-server";
+import { getAuthToken } from "@/src/utils/get-auth-token";
 import { revalidatePath } from "next/cache";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
-
-async function getAuthToken() {
-  const supabase = await createSupabaseServerClient();
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-  return session?.access_token;
-}
 
 interface ISyncSearchTermsInput {
   customerId: string;
