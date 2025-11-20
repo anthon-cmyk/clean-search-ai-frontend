@@ -3,7 +3,7 @@
 import { getAuthToken } from "@/src/utils/get-auth-token";
 import { revalidatePath } from "next/cache";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_URL = process.env.API_URL || "http://localhost:4000";
 
 interface ISyncSearchTermsInput {
   customerId: string;

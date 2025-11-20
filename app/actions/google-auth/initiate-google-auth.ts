@@ -3,7 +3,7 @@
 import { createSupabaseServerClient } from "@/src/lib/supabase/supabase-server";
 import { redirect } from "next/navigation";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
+const API_URL = process.env.API_URL || "http://localhost:4000";
 
 export async function initiateGoogleAuth() {
   const supabase = await createSupabaseServerClient();

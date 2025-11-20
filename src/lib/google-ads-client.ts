@@ -10,7 +10,10 @@ async function authedFetch(input: RequestInfo, init?: RequestInit) {
   const token = data.session?.access_token;
   if (!token) throw new Error("Not authenticated");
 
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${input}`, {
+  const fetchUrl = `${process.env.NEXT_PUBLIC_API_URL}${input}`;
+  console.log("🚀 ~ authedFetch ~ fetchUrl:", fetchUrl);
+
+  const res = await fetch(fetchUrl, {
     ...init,
     headers: {
       ...(init?.headers ?? {}),
@@ -24,21 +27,21 @@ async function authedFetch(input: RequestInfo, init?: RequestInit) {
 }
 
 export const googleAdsApi = {
-  accounts: () => authedFetch("/google-ads/accounts"),
-  customers: () => authedFetch("/google-ads/customers"),
+  accounts: () => authedFetch("/api/google-ads/accounts"),
+  customers: () => authedFetch("/api/google-ads/customers"),
   previewTerms: (dto: TFetchSearchTermsInput) => {
     const qs = new URLSearchParams(dto).toString();
-    return authedFetch(`/google-ads/search-terms?${qs}`);
+    return authedFetch(`/api/google-ads/search-terms?${qs}`);
   },
   syncTerms: (dto: TSyncSearchTermsInput) =>
-    authedFetch("/google-ads/sync-search-terms", {
+    authedFetch("/api/google-ads/sync-search-terms", {
       method: "POST",
       body: JSON.stringify(dto),
     }),
   syncJobs: (customerId: string) =>
-    authedFetch(`/google-ads/sync-jobs?customerId=${customerId}`),
+    authedFetch(`/api/google-ads/sync-jobs?customerId=${customerId}`),
   storedTerms: (dto: TFetchSearchTermsInput) => {
     const qs = new URLSearchParams(dto).toString();
-    return authedFetch(`/google-ads/search-terms/stored?${qs}`);
+    return authedFetch(`/api/google-ads/search-terms/stored?${qs}`);
   },
 };

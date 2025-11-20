@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/src/lib/supabase/supabase-server";
 
 const API_URL = process.env.API_URL || "http://localhost:4000";
 
-export async function GET() {
+export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient();
   const { data } = await supabase.auth.getSession();
   const token = data.session?.access_token;
@@ -12,12 +12,17 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const fetchUrl = `${API_URL}/google-ads/customers`;
-  console.log("🚀 ~ GET ~ fetchUrl:", fetchUrl);
+  const fetchUrl = `${API_URL}/google-ads/sync-search-terms`;
+  console.log("🚀 ~ POST ~ fetchUrl:", fetchUrl);
 
+  const body = await req.text();
   const res = await fetch(fetchUrl, {
-    headers: { Authorization: `Bearer ${token}` },
-    cache: "no-store",
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body,
   });
 
   const text = await res.text();

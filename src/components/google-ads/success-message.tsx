@@ -1,9 +1,11 @@
-export function SuccessMessage({
+export async function SuccessMessage({
   searchParams,
 }: {
   searchParams: { connected?: string; accounts?: string };
 }) {
-  if (!searchParams?.connected) return null;
+  const awaitedSearchParams = await searchParams;
+
+  if (!awaitedSearchParams?.connected) return null;
 
   return (
     <div className="mb-6 rounded-md bg-green-50 p-4">
@@ -27,9 +29,11 @@ export function SuccessMessage({
           </h3>
           <div className="mt-2 text-sm text-green-700">
             <p>
-              {searchParams.accounts
-                ? `Connected ${searchParams.accounts} Google Ads account${
-                    Number(searchParams.accounts) > 1 ? "s" : ""
+              {awaitedSearchParams.accounts
+                ? `Connected ${
+                    awaitedSearchParams.accounts
+                  } Google Ads account${
+                    +awaitedSearchParams.accounts > 1 ? "s" : ""
                   }.`
                 : "Your Google Ads account has been connected."}
             </p>

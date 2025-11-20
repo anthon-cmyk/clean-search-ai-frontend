@@ -12,13 +12,11 @@ export async function GET() {
     return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
   }
 
-  const fetchUrl = `${API_URL}/google-ads/customers`;
-  console.log("🚀 ~ GET ~ fetchUrl:", fetchUrl);
-
-  const res = await fetch(fetchUrl, {
+  const res = await fetch(`${API_URL}/google-ads/accounts`, {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
+  console.log("🚀 ~ GET ~ res:", res);
 
   const text = await res.text();
   if (!res.ok) {
