@@ -7,6 +7,7 @@ import { SuccessMessage } from "@/src/components/google-ads/success-message";
 import { ConnectGoogleAdsButton } from "@/src/components/google-ads/connect-google-ads-button";
 
 import { createSupabaseServerClient } from "@/src/lib/supabase/supabase-server";
+import { GoogleAdsPanel } from "@/src/components/google-ads/google-ads-panel";
 
 export default async function DashboardPage({
   searchParams,
@@ -23,7 +24,7 @@ export default async function DashboardPage({
   }
 
   return (
-    <div className="mx-auto max-w-4xl p-6">
+    <div className="mx-auto p-6">
       <h1 className="mb-8 text-3xl font-bold">Dashboard</h1>
 
       <Suspense fallback={null}>
@@ -40,6 +41,8 @@ export default async function DashboardPage({
 
         <ConnectGoogleAdsButton />
       </div>
+
+      <GoogleAdsPanel />
     </div>
   );
 }

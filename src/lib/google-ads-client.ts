@@ -37,4 +37,8 @@ export const googleAdsApi = {
     }),
   syncJobs: (customerId: string) =>
     authedFetch(`/google-ads/sync-jobs?customerId=${customerId}`),
+  storedTerms: (dto: TFetchSearchTermsInput) => {
+    const qs = new URLSearchParams(dto).toString();
+    return authedFetch(`/google-ads/search-terms/stored?${qs}`);
+  },
 };
