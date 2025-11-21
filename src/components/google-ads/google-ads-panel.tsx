@@ -85,17 +85,20 @@ export function GoogleAdsPanel() {
   const selection = useMemo(() => {
     const storedIds = new Set(customers.map((c) => c.customerId));
 
-    const storedSelectable: TSelectableAccount[] = customers.map((c) => ({
-      customerId: c.customerId,
-      loginCustomerId: c.loginCustomerId,
-      isManagerAccount: c.isManagerAccount,
-      label:
-        c.customerDescriptiveName ||
-        c.customerName ||
-        `Customer ${c.customerId}`,
-    }));
+    const storedSelectable: TSelectableAccount[] = customers
+      // .filter((c) => !c.isManagerAccount)
+      .map((c) => ({
+        customerId: c.customerId,
+        loginCustomerId: c.loginCustomerId,
+        isManagerAccount: c.isManagerAccount,
+        label:
+          c.customerDescriptiveName ||
+          c.customerName ||
+          `Customer ${c.customerId}`,
+      }));
 
     const unstoredSelectable: TSelectableAccount[] = accounts
+      // .filter((a) => !a.isManagerAccount)
       .filter((a) => !storedIds.has(a.customerId))
       .map((a) => ({
         customerId: a.customerId,
@@ -122,7 +125,10 @@ export function GoogleAdsPanel() {
 
   // Sync to DB
   const syncM = useMutation<ISyncResult, Error, TSyncSearchTermsInput>({
-    mutationFn: (dto) => googleAdsApi.syncTerms(dto),
+    mutationFn: (dto) => {
+      console.log("🚀 ~ GoogleAdsPanel ~ dto:", dto);
+      return googleAdsApi.syncTerms(dto);
+    },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["googleAds", "customers"] });
       qc.invalidateQueries({
