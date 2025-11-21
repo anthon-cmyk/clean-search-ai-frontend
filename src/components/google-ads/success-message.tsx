@@ -4,6 +4,10 @@ export async function SuccessMessage({
   searchParams: { connected?: string; accounts?: string };
 }) {
   const awaitedSearchParams = await searchParams;
+  console.log(
+    "🚀 ~ SuccessMessage ~ awaitedSearchParams:",
+    awaitedSearchParams
+  );
 
   if (!awaitedSearchParams?.connected) return null;
 
