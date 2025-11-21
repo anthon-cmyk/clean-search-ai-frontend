@@ -114,7 +114,10 @@ export function GoogleAdsPanel() {
     Error,
     TFetchSearchTermsInput
   >({
-    mutationFn: (dto) => googleAdsApi.previewTerms(dto),
+    mutationFn: (dto) => {
+      console.log("🚀 ~ GoogleAdsPanel ~ dto:", dto);
+      return googleAdsApi.previewTerms(dto);
+    },
   });
 
   // Sync to DB
