@@ -18,7 +18,7 @@ export interface IGoogleAdsSearchTerm {
   adGroupId: string;
   adGroupName: string;
   searchTerm: string;
-  keyword: string;
+  // keyword: string;
   metrics: {
     impressions: number;
     clicks: number;

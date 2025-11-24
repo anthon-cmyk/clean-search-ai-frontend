@@ -353,7 +353,7 @@ export function GoogleAdsPanel() {
               <div className="text-neutral-600">
                 Campaign: {t.campaignName} · AdGroup: {t.adGroupName}
               </div>
-              <div className="text-neutral-600">Keyword: {t.keyword}</div>
+              {/* <div className="text-neutral-600">Keyword: {t.keyword}</div> */}
               <div className="text-neutral-500">
                 Impr {t.metrics.impressions} · Clicks {t.metrics.clicks} · Cost{" "}
                 {t.metrics.cost.toFixed(2)} · Conv {t.metrics.conversions}
@@ -397,7 +397,7 @@ export function GoogleAdsPanel() {
               <div className="text-neutral-600">
                 Campaign: {t.campaignName} · AdGroup: {t.adGroupName}
               </div>
-              <div className="text-neutral-600">Keyword: {t.keyword}</div>
+              {/* <div className="text-neutral-600">Keyword: {t.keyword}</div> */}
             </div>
           ))}
         </div>
