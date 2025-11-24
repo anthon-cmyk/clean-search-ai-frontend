@@ -16,7 +16,6 @@ export async function GET() {
     headers: { Authorization: `Bearer ${token}` },
     cache: "no-store",
   });
-  console.log("🚀 ~ GET ~ res:", res);
 
   const text = await res.text();
   if (!res.ok) {
