@@ -3,13 +3,21 @@
 import { useState } from "react";
 import { IGoogleAdsCampaign } from "@/src/types/api/google-ads.types";
 import { AdGroupsList } from "./ad-groups-list";
+import { getCampaignStatusLabel } from "@/src/utils/google-ads";
 
 type TCampaignCardProps = {
   campaign: IGoogleAdsCampaign;
   hasMetrics: boolean;
+  customerId: string;
+  loginCustomerId: string;
 };
 
-export function CampaignCard({ campaign, hasMetrics }: TCampaignCardProps) {
+export function CampaignCard({
+  campaign,
+  hasMetrics,
+  customerId,
+  loginCustomerId,
+}: TCampaignCardProps) {
   console.log("🚀 ~ CampaignCard ~ campaign:", campaign);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -23,12 +31,12 @@ export function CampaignCard({ campaign, hasMetrics }: TCampaignCardProps) {
             {hasAdGroups && (
               <button
                 onClick={() => setIsExpanded(!isExpanded)}
-                className="hover:bg-neutral-100 rounded p-1 transition-colors"
+                className="hover:bg-neutral-100 cursor-pointer rounded px-2 py-1 transition-colors text-xs"
                 aria-label={
                   isExpanded ? "Collapse ad groups" : "Expand ad groups"
                 }
               >
-                {isExpanded ? "▲" : "▼"}
+                {isExpanded ? "▼" : "▶"}
               </button>
             )}
             <div className="font-medium">{campaign.campaignName}</div>
@@ -39,7 +47,7 @@ export function CampaignCard({ campaign, hasMetrics }: TCampaignCardProps) {
             )}
           </div>
           <div className="text-xs px-2 py-0.5 rounded bg-neutral-100 text-neutral-700">
-            {campaign.status}
+            {getCampaignStatusLabel(+campaign.status)}
           </div>
         </div>
 
@@ -63,6 +71,8 @@ export function CampaignCard({ campaign, hasMetrics }: TCampaignCardProps) {
         <AdGroupsList
           adGroups={campaign.adGroups || []}
           currencyCode={campaign.currencyCode}
+          customerId={customerId}
+          loginCustomerId={loginCustomerId}
         />
       )}
     </div>

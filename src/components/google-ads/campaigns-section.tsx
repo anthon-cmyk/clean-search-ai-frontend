@@ -9,6 +9,8 @@ type TCampaignsSectionProps = {
   error: Error | null;
   hasMetrics: boolean;
   isSelected: boolean;
+  customerId: string;
+  loginCustomerId: string;
 };
 
 export function CampaignsSection({
@@ -17,6 +19,8 @@ export function CampaignsSection({
   error,
   hasMetrics,
   isSelected,
+  customerId,
+  loginCustomerId,
 }: TCampaignsSectionProps) {
   return (
     <section className="border rounded-lg">
@@ -45,6 +49,8 @@ export function CampaignsSection({
             key={campaign.campaignId}
             campaign={campaign}
             hasMetrics={hasMetrics}
+            customerId={customerId}
+            loginCustomerId={loginCustomerId}
           />
         ))}
       </div>

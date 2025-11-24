@@ -19,7 +19,7 @@ export interface IGoogleAdsKeyword {
   campaignName: string;
   keywordText: string;
   matchType: string;
-  status: string;
+  status: number;
   finalUrls: string[];
   cpcBidMicros: number;
   cpcBid: number;

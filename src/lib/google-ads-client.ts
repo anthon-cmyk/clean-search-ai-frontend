@@ -1,3 +1,4 @@
+import { IGoogleAdsKeyword } from "../types/api/google-ads-client.types";
 import {
   TFetchCampaignsInput,
   TFetchSearchTermsInput,
@@ -8,6 +9,7 @@ import {
   ISyncResult,
   TGoogleAdsCustomer,
   TSyncJob,
+  TFetchKeywordsInput,
 } from "../types/api/google-ads.types";
 import { createSupabaseBrowserClient } from "./supabase/supabase-client";
 
@@ -53,6 +55,7 @@ export const googleAdsApi = {
 
     if (dto.startDate) params.startDate = dto.startDate;
     if (dto.endDate) params.endDate = dto.endDate;
+    console.log("🚀 ~ dto.includeAdGroups:", dto.includeAdGroups);
     if (dto.includeAdGroups !== undefined) {
       params.includeAdGroups = String(dto.includeAdGroups);
     }
@@ -93,6 +96,18 @@ export const googleAdsApi = {
 
     return authedFetch<IGoogleAdsSearchTerm[]>(
       `/api/google-ads/search-terms/stored?${params}`
+    );
+  },
+
+  keywords: (dto: TFetchKeywordsInput) => {
+    const params = new URLSearchParams(
+      Object.entries(dto)
+        .filter(([_, value]) => value !== undefined)
+        .reduce((acc, [key, value]) => ({ ...acc, [key]: String(value) }), {})
+    ).toString();
+
+    return authedFetch<IGoogleAdsKeyword[]>(
+      `/api/google-ads/keywords?${params}`
     );
   },
 };

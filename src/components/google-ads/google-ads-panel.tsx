@@ -17,17 +17,7 @@ import {
 import { CampaignsSection } from "./campaigns-section";
 import { SearchTermsSection } from "./search-terms-section";
 import { SyncJobsSection } from "./sync-jobs-section";
-
-function toYmd(d: Date): string {
-  return d.toISOString().slice(0, 10);
-}
-
-function lastNDaysRange(n: number) {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(end.getDate() - n);
-  return { startDate: toYmd(start), endDate: toYmd(end) };
-}
+import { lastNDaysRange } from "@/src/utils/google-ads";
 
 type TSelectableAccount = {
   customerId: string;
@@ -40,7 +30,7 @@ export function GoogleAdsPanel() {
   const qc = useQueryClient();
 
   const [selected, setSelected] = useState<TSelectableAccount | null>(null);
-  const [includeAdGroups, setIncludeAdGroups] = useState(false);
+  const [includeAdGroups, setIncludeAdGroups] = useState(true);
 
   const initialRange = useMemo(() => lastNDaysRange(30), []);
 
@@ -376,6 +366,8 @@ export function GoogleAdsPanel() {
         error={campaignsQ.error}
         hasMetrics={hasMetrics}
         isSelected={!!selected}
+        customerId={selected?.customerId ?? ""}
+        loginCustomerId={selected?.loginCustomerId ?? ""}
       />
 
       <SearchTermsSection

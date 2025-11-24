@@ -142,7 +142,7 @@ export const fetchCampaignsSchema = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "End date must be in YYYY-MM-DD format")
     .optional(),
-  includeAdGroups: z.boolean().optional(),
+  includeAdGroups: z.boolean().optional().default(true),
 });
 
 export type TFetchCampaignsInput = z.infer<typeof fetchCampaignsSchema>;
