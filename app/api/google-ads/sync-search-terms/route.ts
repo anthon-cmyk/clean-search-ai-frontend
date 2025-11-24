@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
   }
 
   const fetchUrl = `${API_URL}/google-ads/sync-search-terms`;
-  console.log("🚀 ~ POST ~ fetchUrl:", fetchUrl);
 
   const body = await req.text();
   const res = await fetch(fetchUrl, {

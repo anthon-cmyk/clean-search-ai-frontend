@@ -6,39 +6,19 @@ import { googleAdsApi } from "@/src/lib/google-ads-client";
 import {
   IGoogleAdsAccount,
   IGoogleAdsSearchTerm,
-  TFetchSearchTermsInput,
   ISyncResult,
   TSyncSearchTermsInput,
+  IGoogleAdsCampaign,
+  TGoogleAdsCustomer,
+  TSyncJob,
+  TFetchSearchTermsInput,
 } from "@/src/types/api/google-ads.types";
 
-type TGoogleAdsCustomer = {
-  id: string;
-  customerId: string;
-  customerName?: string | null;
-  customerDescriptiveName?: string | null;
-  loginCustomerId: string;
-  isManagerAccount: boolean;
-  managerCustomerId?: string | null;
-  currencyCode?: string | null;
-  timeZone?: string | null;
-  lastSyncedAt?: string | null;
-};
+import { CampaignsSection } from "./campaigns-section";
+import { SearchTermsSection } from "./search-terms-section";
+import { SyncJobsSection } from "./sync-jobs-section";
 
-type TSyncJob = {
-  id: string;
-  status: "pending" | "running" | "completed" | "failed";
-  syncStartDate: string;
-  syncEndDate: string;
-  syncType: string;
-  recordsProcessed?: number | null;
-  errorMessage?: string | null;
-  createdAt: string;
-  startedAt?: string | null;
-  completedAt?: string | null;
-};
-
-// ---- helpers ----
-function toYmd(d: Date) {
+function toYmd(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
 
@@ -60,75 +40,54 @@ export function GoogleAdsPanel() {
   const qc = useQueryClient();
 
   const [selected, setSelected] = useState<TSelectableAccount | null>(null);
+  const [includeAdGroups, setIncludeAdGroups] = useState(false);
 
   const initialRange = useMemo(() => lastNDaysRange(30), []);
 
   const [startDate, setStartDate] = useState(initialRange.startDate);
   const [endDate, setEndDate] = useState(initialRange.endDate);
 
-  // DB customers (source of truth)
   const customersQ = useQuery<TGoogleAdsCustomer[]>({
     queryKey: ["googleAds", "customers"],
     queryFn: () => googleAdsApi.customers(),
   });
 
-  // Accessible accounts (live from Google)
   const accountsQ = useQuery<IGoogleAdsAccount[]>({
     queryKey: ["googleAds", "accounts"],
     queryFn: () => googleAdsApi.accounts(),
   });
 
-  const customers = customersQ.data ?? [];
-  const accounts = accountsQ.data ?? [];
+  const campaignsQ = useQuery<IGoogleAdsCampaign[]>({
+    queryKey: [
+      "googleAds",
+      "campaigns",
+      selected?.customerId,
+      selected?.loginCustomerId,
+      startDate,
+      endDate,
+      includeAdGroups,
+    ],
+    queryFn: () =>
+      googleAdsApi.campaigns({
+        customerId: selected!.customerId,
+        loginCustomerId: selected!.loginCustomerId,
+        startDate,
+        endDate,
+        includeAdGroups,
+      }),
+    enabled: !!selected?.customerId && !!selected?.loginCustomerId,
+  });
 
-  // Build selection list: stored customers + unstored accessible accounts
-  const selection = useMemo(() => {
-    const storedIds = new Set(customers.map((c) => c.customerId));
-
-    const storedSelectable: TSelectableAccount[] = customers
-      // .filter((c) => !c.isManagerAccount)
-      .map((c) => ({
-        customerId: c.customerId,
-        loginCustomerId: c.loginCustomerId,
-        isManagerAccount: c.isManagerAccount,
-        label:
-          c.customerDescriptiveName ||
-          c.customerName ||
-          `Customer ${c.customerId}`,
-      }));
-
-    const unstoredSelectable: TSelectableAccount[] = accounts
-      // .filter((a) => !a.isManagerAccount)
-      .filter((a) => !storedIds.has(a.customerId))
-      .map((a) => ({
-        customerId: a.customerId,
-        loginCustomerId: a.loginCustomerId ?? a.customerId,
-        isManagerAccount: a.isManagerAccount,
-        label:
-          a.descriptiveName || a.customerName || `Customer ${a.customerId}`,
-      }));
-
-    return { storedSelectable, unstoredSelectable };
-  }, [customers, accounts]);
-
-  // Preview (live API terms)
   const previewM = useMutation<
     IGoogleAdsSearchTerm[],
     Error,
     TFetchSearchTermsInput
   >({
-    mutationFn: (dto) => {
-      console.log("🚀 ~ GoogleAdsPanel ~ dto:", dto);
-      return googleAdsApi.previewTerms(dto);
-    },
+    mutationFn: (dto) => googleAdsApi.previewTerms(dto),
   });
 
-  // Sync to DB
   const syncM = useMutation<ISyncResult, Error, TSyncSearchTermsInput>({
-    mutationFn: (dto) => {
-      console.log("🚀 ~ GoogleAdsPanel ~ dto:", dto);
-      return googleAdsApi.syncTerms(dto);
-    },
+    mutationFn: (dto) => googleAdsApi.syncTerms(dto),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["googleAds", "customers"] });
       qc.invalidateQueries({
@@ -146,7 +105,6 @@ export function GoogleAdsPanel() {
     },
   });
 
-  // Stored terms (optional; requires googleAdsApi.storedTerms)
   const storedTermsQ = useQuery<IGoogleAdsSearchTerm[]>({
     queryKey: [
       "googleAds",
@@ -162,21 +120,46 @@ export function GoogleAdsPanel() {
         startDate,
         endDate,
       }),
-    enabled:
-      !!selected &&
-      !!startDate &&
-      !!endDate &&
-      typeof googleAdsApi.storedTerms === "function",
+    enabled: !!selected && !!startDate && !!endDate,
   });
 
-  // Sync jobs history
   const syncJobsQ = useQuery<TSyncJob[]>({
     queryKey: ["googleAds", "syncJobs", selected?.customerId],
     queryFn: () => googleAdsApi.syncJobs(selected!.customerId),
     enabled: !!selected,
-    refetchInterval: (q) =>
-      q.state.data?.some((j) => j.status === "running") ? 4000 : false,
+    refetchInterval: (query) =>
+      query.state.data?.some((j) => j.status === "running") ? 4000 : false,
   });
+
+  const customers = customersQ.data ?? [];
+  const accounts = accountsQ.data ?? [];
+  const campaigns = campaignsQ.data ?? [];
+
+  const selection = useMemo(() => {
+    const storedIds = new Set(customers.map((c) => c.customerId));
+
+    const storedSelectable: TSelectableAccount[] = customers.map((c) => ({
+      customerId: c.customerId,
+      loginCustomerId: c.loginCustomerId,
+      isManagerAccount: c.isManagerAccount,
+      label:
+        c.customerDescriptiveName ||
+        c.customerName ||
+        `Customer ${c.customerId}`,
+    }));
+
+    const unstoredSelectable: TSelectableAccount[] = accounts
+      .filter((a) => !storedIds.has(a.customerId))
+      .map((a) => ({
+        customerId: a.customerId,
+        loginCustomerId: a.loginCustomerId ?? a.customerId,
+        isManagerAccount: a.isManagerAccount,
+        label:
+          a.descriptiveName || a.customerName || `Customer ${a.customerId}`,
+      }));
+
+    return { storedSelectable, unstoredSelectable };
+  }, [customers, accounts]);
 
   const canRun =
     !!selected?.customerId && !!startDate && !!endDate && !previewM.isPending;
@@ -202,6 +185,23 @@ export function GoogleAdsPanel() {
     });
   };
 
+  const handleRefresh = () => {
+    qc.invalidateQueries({ queryKey: ["googleAds", "accounts"] });
+    qc.invalidateQueries({ queryKey: ["googleAds", "customers"] });
+    if (selected) {
+      qc.invalidateQueries({
+        queryKey: [
+          "googleAds",
+          "campaigns",
+          selected.customerId,
+          selected.loginCustomerId,
+        ],
+      });
+    }
+  };
+
+  const hasMetrics = !!startDate && !!endDate;
+
   return (
     <div className="space-y-6 p-6">
       <header className="space-y-1">
@@ -211,7 +211,6 @@ export function GoogleAdsPanel() {
         </p>
       </header>
 
-      {/* Global loading/errors */}
       {(customersQ.isLoading || accountsQ.isLoading) && (
         <div className="text-sm text-neutral-500">Loading Google Ads…</div>
       )}
@@ -222,11 +221,13 @@ export function GoogleAdsPanel() {
         </div>
       )}
 
-      {/* Selection / Filters */}
       <section className="border rounded-lg p-4 space-y-4">
         <div className="space-y-2">
-          <label className="text-sm font-medium">Customer account</label>
+          <label htmlFor="customer-select" className="text-sm font-medium">
+            Customer account
+          </label>
           <select
+            id="customer-select"
             className="w-full border rounded p-2"
             value={selected?.customerId ?? ""}
             onChange={(e) => {
@@ -239,6 +240,7 @@ export function GoogleAdsPanel() {
               setSelected(sel);
               previewM.reset();
             }}
+            aria-label="Select Google Ads customer account"
           >
             <option value="" disabled>
               Select account…
@@ -270,184 +272,140 @@ export function GoogleAdsPanel() {
 
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1">
-            <label className="text-sm font-medium">Start date</label>
+            <label htmlFor="start-date" className="text-sm font-medium">
+              Start date
+            </label>
             <input
+              id="start-date"
               type="date"
               className="w-full border rounded p-2"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
+              aria-label="Select start date"
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm font-medium">End date</label>
+            <label htmlFor="end-date" className="text-sm font-medium">
+              End date
+            </label>
             <input
+              id="end-date"
               type="date"
               className="w-full border rounded p-2"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              aria-label="Select end date"
             />
           </div>
         </div>
 
+        <div className="flex items-center gap-2">
+          <input
+            id="include-ad-groups"
+            type="checkbox"
+            checked={includeAdGroups}
+            onChange={(e) => setIncludeAdGroups(e.target.checked)}
+            className="rounded border-neutral-300"
+          />
+          <label
+            htmlFor="include-ad-groups"
+            className="text-sm font-medium cursor-pointer"
+          >
+            Include ad groups in campaigns
+          </label>
+        </div>
+
         <div className="flex gap-2">
           <button
-            className="border rounded px-3 py-2 text-sm disabled:opacity-50"
+            className="border rounded px-3 py-2 text-sm disabled:opacity-50 hover:bg-neutral-50 transition-colors"
             disabled={!canRun}
             onClick={onPreview}
+            aria-label="Preview live search terms"
           >
-            Preview live terms
+            {previewM.isPending ? "Loading…" : "Preview live terms"}
           </button>
 
           <button
-            className="bg-black text-white rounded px-3 py-2 text-sm disabled:opacity-50"
+            className="bg-black text-white rounded px-3 py-2 text-sm disabled:opacity-50 hover:bg-neutral-800 transition-colors"
             disabled={!selected?.customerId || syncM.isPending}
             onClick={onSync}
+            aria-label="Sync search terms to database"
           >
-            Sync to DB
+            {syncM.isPending ? "Syncing…" : "Sync to DB"}
           </button>
 
           <button
-            className="ml-auto border rounded px-3 py-2 text-sm"
-            onClick={() => {
-              qc.invalidateQueries({ queryKey: ["googleAds", "accounts"] });
-              qc.invalidateQueries({ queryKey: ["googleAds", "customers"] });
-            }}
+            className="ml-auto border rounded px-3 py-2 text-sm hover:bg-neutral-50 transition-colors"
+            onClick={handleRefresh}
+            aria-label="Refresh all data"
           >
             Refresh
           </button>
         </div>
 
         {previewM.error && (
-          <div className="text-sm text-red-600">{previewM.error.message}</div>
+          <div
+            className="text-sm text-red-600 p-3 bg-red-50 rounded border border-red-200"
+            role="alert"
+          >
+            {previewM.error.message}
+          </div>
         )}
         {syncM.error && (
-          <div className="text-sm text-red-600">{syncM.error.message}</div>
+          <div
+            className="text-sm text-red-600 p-3 bg-red-50 rounded border border-red-200"
+            role="alert"
+          >
+            {syncM.error.message}
+          </div>
         )}
         {syncM.data && (
-          <div className="text-sm">
-            Sync: <span className="font-medium">{syncM.data.status}</span> ·
-            Stored {syncM.data.recordsStored}/{syncM.data.recordsFetched}
+          <div className="text-sm p-3 bg-green-50 rounded border border-green-200">
+            <span className="font-medium">
+              {syncM.data.status === "completed" ? "✓" : "✗"}{" "}
+              {syncM.data.status}
+            </span>{" "}
+            · Stored {syncM.data.recordsStored}/{syncM.data.recordsFetched}
           </div>
         )}
       </section>
 
-      {/* Live Preview */}
-      <section className="border rounded-lg">
-        <div className="p-3 border-b font-medium text-sm">
-          Live preview ({previewM.data?.length ?? 0})
-        </div>
-        <div className="max-h-[360px] overflow-auto">
-          {previewM.isPending && (
-            <div className="p-3 text-sm text-neutral-500">
-              Fetching preview…
-            </div>
-          )}
-          {!previewM.isPending && (previewM.data?.length ?? 0) === 0 && (
-            <div className="p-3 text-sm text-neutral-500">
-              Run “Preview live terms” to see API results.
-            </div>
-          )}
-          {previewM.data?.map((t, i) => (
-            <div key={`${t.searchTerm}-${i}`} className="p-3 border-t text-sm">
-              <div className="font-medium">{t.searchTerm}</div>
-              <div className="text-neutral-600">
-                Campaign: {t.campaignName} · AdGroup: {t.adGroupName}
-              </div>
-              {/* <div className="text-neutral-600">Keyword: {t.keyword}</div> */}
-              <div className="text-neutral-500">
-                Impr {t.metrics.impressions} · Clicks {t.metrics.clicks} · Cost{" "}
-                {t.metrics.cost.toFixed(2)} · Conv {t.metrics.conversions}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <CampaignsSection
+        campaigns={campaigns}
+        isLoading={campaignsQ.isLoading}
+        error={campaignsQ.error}
+        hasMetrics={hasMetrics}
+        isSelected={!!selected}
+      />
 
-      {/* Stored Terms (if api is present) */}
-      <section className="border rounded-lg">
-        <div className="p-3 border-b font-medium text-sm">
-          Stored terms ({storedTermsQ.data?.length ?? 0})
-        </div>
-        <div className="max-h-[360px] overflow-auto">
-          {!selected && (
-            <div className="p-3 text-sm text-neutral-500">
-              Select a customer to view stored terms.
-            </div>
-          )}
-          {selected && storedTermsQ.isLoading && (
-            <div className="p-3 text-sm text-neutral-500">
-              Loading stored terms…
-            </div>
-          )}
-          {storedTermsQ.error && (
-            <div className="p-3 text-sm text-red-600">
-              {(storedTermsQ.error as Error).message}
-            </div>
-          )}
-          {selected &&
-            !storedTermsQ.isLoading &&
-            (storedTermsQ.data?.length ?? 0) === 0 && (
-              <div className="p-3 text-sm text-neutral-500">
-                No stored terms for this range.
-              </div>
-            )}
-          {storedTermsQ.data?.map((t, i) => (
-            <div key={`${t.searchTerm}-${i}`} className="p-3 border-t text-sm">
-              <div className="font-medium">{t.searchTerm}</div>
-              <div className="text-neutral-600">
-                Campaign: {t.campaignName} · AdGroup: {t.adGroupName}
-              </div>
-              {/* <div className="text-neutral-600">Keyword: {t.keyword}</div> */}
-            </div>
-          ))}
-        </div>
-      </section>
+      <SearchTermsSection
+        title="Live preview"
+        terms={previewM.data ?? []}
+        isLoading={previewM.isPending}
+        error={previewM.error}
+        emptyMessage="Run 'Preview live terms' to see API results."
+        showMetrics
+      />
 
-      {/* Sync Jobs */}
-      <section className="border rounded-lg">
-        <div className="p-3 border-b font-medium text-sm">Sync jobs</div>
-        <div className="max-h-[260px] overflow-auto">
-          {!selected && (
-            <div className="p-3 text-sm text-neutral-500">
-              Select a customer to view jobs.
-            </div>
-          )}
-          {selected && syncJobsQ.isLoading && (
-            <div className="p-3 text-sm text-neutral-500">Loading jobs…</div>
-          )}
-          {syncJobsQ.error && (
-            <div className="p-3 text-sm text-red-600">
-              {(syncJobsQ.error as Error).message}
-            </div>
-          )}
-          {selected &&
-            !syncJobsQ.isLoading &&
-            (syncJobsQ.data?.length ?? 0) === 0 && (
-              <div className="p-3 text-sm text-neutral-500">
-                No sync jobs yet.
-              </div>
-            )}
-          {syncJobsQ.data?.map((j) => (
-            <div key={j.id} className="p-3 border-t text-sm">
-              <div className="flex items-center gap-2">
-                <span className="font-medium">{j.status}</span>
-                <span className="text-neutral-500">
-                  {j.syncStartDate} → {j.syncEndDate}
-                </span>
-              </div>
-              <div className="text-neutral-500">
-                Type: {j.syncType} · Records: {j.recordsProcessed ?? 0}
-              </div>
-              {j.errorMessage && (
-                <div className="text-red-600 mt-1">{j.errorMessage}</div>
-              )}
-              <div className="text-neutral-400 text-xs mt-1">
-                Created: {new Date(j.createdAt).toLocaleString()}
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <SearchTermsSection
+        title="Stored Search terms"
+        terms={storedTermsQ.data ?? []}
+        isLoading={storedTermsQ.isLoading}
+        error={storedTermsQ.error}
+        emptyMessage={
+          selected
+            ? "No stored terms for this range."
+            : "Select a customer to view stored terms."
+        }
+        showMetrics={false}
+      />
+
+      <SyncJobsSection
+        jobs={syncJobsQ.data ?? []}
+        isLoading={syncJobsQ.isLoading}
+        error={syncJobsQ.error}
+        isSelected={!!selected}
+      />
     </div>
   );
 }
