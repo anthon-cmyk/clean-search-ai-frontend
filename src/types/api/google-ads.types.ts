@@ -164,3 +164,16 @@ export const fetchKeywordsSchema = z.object({
 });
 
 export type TFetchKeywordsInput = z.infer<typeof fetchKeywordsSchema>;
+
+export interface IFullSyncResult {
+  totalCampaigns: number;
+  totalAdGroups: number;
+  totalKeywords: number;
+}
+
+export type TFullSyncInput = {
+  customerId: string;
+  loginCustomerId: string;
+  startDate?: string;
+  endDate?: string;
+};

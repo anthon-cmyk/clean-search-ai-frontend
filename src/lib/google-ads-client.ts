@@ -10,6 +10,8 @@ import {
   TGoogleAdsCustomer,
   TSyncJob,
   TFetchKeywordsInput,
+  TFullSyncInput,
+  IFullSyncResult,
 } from "../types/api/google-ads.types";
 import { createSupabaseBrowserClient } from "./supabase/supabase-client";
 
@@ -98,6 +100,12 @@ export const googleAdsApi = {
       `/api/google-ads/search-terms/stored?${params}`
     );
   },
+
+  syncAccountStructure: (dto: TFullSyncInput) =>
+    authedFetch<IFullSyncResult>("/api/google-ads/sync-account-structure", {
+      method: "POST",
+      body: JSON.stringify(dto),
+    }),
 
   keywords: (dto: TFetchKeywordsInput) => {
     const params = new URLSearchParams(
