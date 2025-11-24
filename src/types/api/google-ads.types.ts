@@ -121,6 +121,7 @@ export type TFetchSearchTermsInput = z.infer<typeof fetchSearchTermsSchema>;
 
 export const syncSearchTermsSchema = z.object({
   customerId: z.string().min(1, "Customer ID is required"),
+  loginCustomerId: z.string().min(1, "Customer ID is required"),
   startDate: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "Start date must be in YYYY-MM-DD format"),

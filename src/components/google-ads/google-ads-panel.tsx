@@ -151,19 +151,19 @@ export function GoogleAdsPanel() {
     return { storedSelectable, unstoredSelectable };
   }, [customers, accounts]);
 
-  const canRun =
-    !!selected?.customerId && !!startDate && !!endDate && !previewM.isPending;
+  // const canRun =
+  //   !!selected?.customerId && !!startDate && !!endDate && !previewM.isPending;
 
-  const onPreview = () => {
-    if (!selected) return;
+  // const onPreview = () => {
+  //   if (!selected) return;
 
-    previewM.mutate({
-      customerId: selected.customerId,
-      loginCustomerId: selected.loginCustomerId,
-      startDate,
-      endDate,
-    });
-  };
+  //   previewM.mutate({
+  //     customerId: selected.customerId,
+  //     loginCustomerId: selected.loginCustomerId,
+  //     startDate,
+  //     endDate,
+  //   });
+  // };
 
   const onSync = () => {
     if (!selected) return;
@@ -172,6 +172,7 @@ export function GoogleAdsPanel() {
       customerId: selected.customerId,
       startDate,
       endDate,
+      loginCustomerId: selected.loginCustomerId,
     });
   };
 
@@ -306,14 +307,14 @@ export function GoogleAdsPanel() {
         </div>
 
         <div className="flex gap-2">
-          <button
+          {/* <button
             className="border rounded px-3 py-2 text-sm disabled:opacity-50 hover:bg-neutral-50 transition-colors"
             disabled={!canRun}
             onClick={onPreview}
             aria-label="Preview live search terms"
           >
             {previewM.isPending ? "Loading…" : "Preview live terms"}
-          </button>
+          </button> */}
 
           <button
             className="bg-black text-white rounded px-3 py-2 text-sm disabled:opacity-50 hover:bg-neutral-800 transition-colors"
@@ -325,7 +326,7 @@ export function GoogleAdsPanel() {
           </button>
 
           <button
-            className="ml-auto border rounded px-3 py-2 text-sm hover:bg-neutral-50 transition-colors"
+            className="ml-auto cursor-pointer border rounded px-3 py-2 text-sm hover:bg-neutral-50 transition-colors"
             onClick={handleRefresh}
             aria-label="Refresh all data"
           >
@@ -370,14 +371,14 @@ export function GoogleAdsPanel() {
         loginCustomerId={selected?.loginCustomerId ?? ""}
       />
 
-      <SearchTermsSection
+      {/* <SearchTermsSection
         title="Live preview"
         terms={previewM.data ?? []}
         isLoading={previewM.isPending}
         error={previewM.error}
         emptyMessage="Run 'Preview live terms' to see API results."
         showMetrics
-      />
+      /> */}
 
       <SearchTermsSection
         title="Stored Search terms"
